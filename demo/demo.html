@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+
+<title>my directive 4</title>
+<script type="text/javascript" src="angular.js"></script>
+<script type="text/javascript" src="angular-animate.js"></script>
+<script type="text/javascript" src="../iscroll-infinite-wf4.js"></script>
+<script type="text/javascript" src="../wfInfiniteList4.js"></script>
+<script>
+  var app = angular.module('app1',['ngAnimate','Wangf']) ;
+  app.controller('controller1' , function($scope,$http,$timeout){
+    $scope.title = 'infinite scroll4' ;
+    document.title = $scope.title ;
+    $scope.url1 = 'http://www.hihey.com/api2/arts.php' ;
+    $scope.datapool = [] ;
+    $scope.pageSize = 20 ;
+    $scope.scrollInfo = {limit:0,valid:0,loadedPage:0} ;// valid not include empty place holder.
+    
+
+    $scope.delegate = {} ;
+    $scope.delegate.onData=function(el,index)
+    {
+      var hw = window.innerWidth/2 ;
+      var data = $scope.datapool[index] ;
+      if( parseInt(data.id)>0 )
+      {
+        if( $scope.sref.isTwoColumnMode() || $scope.display==='image' )
+          el.innerHTML = "<img width='100%' height='100%' src='"+data.image+"'>" ;
+        else
+        {
+          //300x240 5x4 100x80
+          var imgw = data.imgsize.w ;var imgh = data.imgsize.h ;var r = imgw/imgh ;
+          if(r>=1.25 )
+          {
+            imgw = 100 ; imgh=parseInt(imgw/r) ;
+          } else
+          {
+            imgh = 80 ; imgw = parseInt(imgh*r) ;
+          }
+          htmlstr = "<div style='border-bottom:1px solid #d4d4d4;'>"
+          +"<div style='position:absolute;top:10px;left:10px;width:100px;height:80px;text-align:center;background-color:#d4d4d4;'>" ;
+          if(r>=1.25)
+            htmlstr+="<img style='position:absolute;top:"+parseInt((80-imgh)/2)+"px;left:0px;width:"+imgw+"px;height:"+imgh+"px;' src='"+data.thumb+"'>";
+          else
+            htmlstr+="<img style='width:"+imgw+"px;height:"+imgh+"px;' src='"+data.thumb+"'>";
+          htmlstr+="</div>"
+          +"<div style='position:absolute;left:130px;top:15px;font-weight:bold;font-size:16px;'>"+data.artist+'-'+data.name+"</div>"
+          +"<div style='position:absolute;left:130px;top:40px;'>"+data.price_formated+"</div></div>" ;
+          el.innerHTML=htmlstr ;
+        }
+      }
+      else 
+        el.innerHTML = '' ;
+    } ;
+    $scope.delegate.onCellHeight=function(index)
+    {
+      var wid = window.innerWidth ;
+      if($scope.sref.isTwoColumnMode() ||$scope.display==='image')
+      {
+        if($scope.sref.isTwoColumnMode())
+          wid = wid/2 ;
+        var rhw = $scope.datapool[index].imgsize.h/$scope.datapool[index].imgsize.w ;
+        return rhw*wid ;
+      }else
+      {
+        return 100 ;
+      }
+    } ;
+    $scope.delegate.onPushTriggered=function(sref)
+    {
+      $scope.loadPage($scope.url1,1,$scope.pageSize,sref) ;
+    } ;
+    $scope.delegate.getDataCount=function()
+    {
+      return $scope.datapool.length ;
+    } ;
+    $scope.delegate.onPullTriggered=function(sref)
+    {
+      var ipage = $scope.scrollInfo.loadedPage+1 ;
+      console.log(ipage) ;
+      $scope.loadPage($scope.url1,ipage,$scope.pageSize,sref) ;
+    } ;
+
+
+    $scope.delegate.onCellTapped=function(dind)
+    {
+      console.log('tap : '+dind) ;
+    }
+
+    $scope.delegate.onScrollerReady=function(sref)
+    {
+      $scope.sref = sref ;
+      //sref.pushLoadBegin() ;
+      //sref.setPullElementDisplay(false) ;
+    } ;
+
+
+
+
+
+
+
+
+    $scope.cleanScrollDataInfo = function()
+    {
+      $scope.datapool = [] ;
+      $scope.scrollInfo.limit = 0 ;
+      $scope.scrollInfo.valid = 0 ;
+      $scope.scrollInfo.loadedPage = 0 ;
+    } ; 
+    $scope.loadPage = function(url0,ipage,pagesize,sref)
+    {
+      if( ipage!=1 && ipage != $scope.scrollInfo.loadedPage+1 )
+      {
+        sref.pushPullLoadingFinished(false , false );
+        return ;
+      }
+      var url1 = url0+'?page='+ipage+'&page_size='+pagesize+'&cb=JSON_CALLBACK';
+      $http.jsonp(url1)
+      .success(function(data){
+        if(ipage==1) $scope.cleanScrollDataInfo() ;
+        $scope.scrollInfo.limit = data.result.count ;
+        for(var i = 0 ; i<data.result.arts.length ; i++ )
+          $scope.datapool.push(data.result.arts[i]) ;
+        $scope.scrollInfo.loadedPage = ipage ;
+        sref.pushPullLoadingFinished(true , ($scope.scrollInfo.limit==$scope.scrollInfo.valid) );
+      })// end of success.
+      .error(function(data){
+        sref.pushPullLoadingFinished(false , false );
+      }) ;// end of error and jsonp.
+    } ;
+    $scope.two = 1 ;
+    $scope.display = 'image' ;
+    $scope.toggleColumn = function()
+    {
+      var use2 = false ;
+      if( $scope.two==1 ){ use2=true ;  $scope.two = 2 ; }
+      else{$scope.two=1 ; use2=false ; }
+      $scope.sref.setColumnMode(use2,true) ;
+      $scope.sref.refresh() ;
+    } ;
+    $scope.toggleDisplay = function()
+    {
+      if( $scope.display==='image')
+      {
+        $scope.display='image and text' ;
+      }else
+      {
+        $scope.display = 'image' ;
+      }
+    } ;
+  }) ;
+</script>
+
+<style type="text/css">
+.cell{
+  position: absolute;
+  top: 0px ;
+  left: 0px ;
+  border: 0px ;
+  border-bottom: 1px solid #d4d4d4 ;
+  margin: 0px ;
+  padding: 0px ;
+  padding-top: 9px ;
+  padding-left: 15px ;
+  width: 100% ;
+  height: 80px ;
+  background-color: white ;
+}
+.cell>img{
+  width: 57px ;
+  height: 57px ;
+  margin: 0px ;
+  padding: 0px ;
+  border-radius: 50% ;
+}
+.cell>h3{
+  position: absolute;
+  top:1px;
+  left: 93px ;
+  color: #151515 ;
+  font-size: 16px ;
+}
+.cell>p{
+  position: absolute;
+  top: 32px; 
+  left: 93px ;
+  color: #696969 ;
+  font-size: 12px ;
+}
+</style>
+
+</head>
+<body ng-app='app1' ng-controller='controller1' style='margin:0px;padding:0px;'>
+  <div class='header' style='background-color:grey;'>
+    <h3 style='margin:0px;padding:0px;display:block;'>{{title}}</h3>
+      <button ng-click='toggleColumn()'>column: {{two}}</button>
+      <button ng-click='toggleDisplay()'>{{display}}</button>
+  </div>
+
+<wf-infinite-list4 delegate='delegate' two-column='false' push-enable='true' pull-enable='true' style='position:absolute;top:44px;left:0px;width:100%;bottom:0px;background-color:white;'></wf-infinite-list4>
+
+</body>
+</html>
