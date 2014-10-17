@@ -5,16 +5,16 @@
     
     --- new ----
     1.Because wrapper should be the first child of the directive,
-      there should be nothing between <wf-infinite-list3> and </wf-infinite-list3>,
+      there should be nothing between <wf-infinite-list4> and </wf-infinite-list4>,
       even newline is bad.
-      e.g. <wf-infinite-list3></wf-infinite-list3> is ok.
-           <wf-infinite-list3> </wf-infinite-list3> is bad.
-           <wf-infinite-list3>something</wf-infinite-list3> is bad.
-           <wf-infinite-list3><p>text</p></wf-infinite-list3> is bad.
-           <wf-infinite-list3>
-           </wf-infinite-list3> is bad.
+      e.g. <wf-infinite-list4></wf-infinite-list4> is ok.
+           <wf-infinite-list4> </wf-infinite-list4> is bad.
+           <wf-infinite-list4>something</wf-infinite-list4> is bad.
+           <wf-infinite-list4><p>text</p></wf-infinite-list4> is bad.
+           <wf-infinite-list4>
+           </wf-infinite-list4> is bad.
 
-    2.Height of <wf-infinite-list3> should be defined or could be calculated by style.
+    2.Height of <wf-infinite-list4> should be defined or could be calculated by style.
 
     3.<wf-infinite-list3> have following attrs:
       required attrs:
@@ -39,48 +39,56 @@
 
     4. delegate must have following methods:
         $scope.delegate = {} ;
-        $scope.delegate.onData=function(el,index,lr)
-        {//el:element ; index:index in left or right; lr:0-left,1-right.
+        $scope.delegate.onData=function(el,index)
+        {//el:element ; index:dataindex.
           el.innerHTML = 'data' ;
         } ;
-        $scope.delegate.onCellHeight=function(index,lr)
-        {//index:index in left or right; lr:0-left,1-right.
-          return $scope.datapool[lr][index].h ;
-        } ;
-        $scope.delegate.onCellY = function(index,lr)
-        {//index:index in left or right; lr:0-left,1-right.
-          return $scope.datapool[lr][index].y ;
-        } ;
-        $scope.delegate.onScrollHeight = function(lr)
-        {//lr:0-left,1-right.
-          return allHeight[lr] ;
-        } ;
-        $scope.delegate.onCellIndex15 = function(index,lr)
-        {//index:index in left or right; lr:0-left,1-right.
-          return $scope.datapool[lr][index].i15 ;
+        $scope.delegate.onCellHeight=function(index)
+        {//index:index : dataindex .
+          // if($scope.sref.isTwoColumnMode(){}
+          return 80 ;
         } ;
         $scope.delegate.onPushTriggered=function(sref)
         {//sref:scroller reference.
           $scope.loadPage($scope.url1,1,$scope.pageSize,sref) ;
         } ;
-        $scope.delegate.getDataCount=function(lr)
+        $scope.delegate.getDataCount=function()
         {//lr:0-left,1-right.
-          return $scope.datapool[lr].length ;
+          return $scope.datapool.length ;
         } ;
         $scope.delegate.onPullTriggered=function(sref)
         {//sref:scroller reference.
-          //! because scroller need to know each cell's height to display correctly,
-          //  the smaller pager must be loaded before bigger pager.
           $scope.loadPage($scope.url1,ipage,$scope.pageSize,sref) ;
         } ;
-        $scope.delegate.onCellTapped=function(dind,lr)
-        {//dind:index in left or right; lr:0-left,1-right;
-          console.log('tap : '+dind+','+lr) ;
+        $scope.delegate.onCellTapped=function(dind)
+        {//dind:dataindex
+          console.log('tap : '+dind) ;
         }
         $scope.delegate.onScrollerReady=function(sref)
-        {//sref:scroller reference.
-          //sref.pushLoadBegin() ;
-          //sref.setPullElementDisplay(false) ;
+        {
+          $scope.sref = sref ;
+        } ;
+        //optional
+        $scope.loadPage = function(url0,ipage,pagesize,sref)
+        {
+          if( ipage!=1 && ipage != $scope.scrollInfo.loadedPage+1 )
+          {
+            sref.pushPullLoadingFinished(false , false );
+            return ;
+          }
+          var url1 = url0+'?page='+ipage+'&page_size='+pagesize+'&cb=JSON_CALLBACK';
+          $http.jsonp(url1)
+          .success(function(data){
+            if(ipage==1) $scope.cleanScrollDataInfo() ;
+            $scope.scrollInfo.limit = data.result.count ;
+            for(var i = 0 ; i<data.result.arts.length ; i++ )
+              $scope.datapool.push(data.result.arts[i]) ;
+            $scope.scrollInfo.loadedPage = ipage ;
+            sref.pushPullLoadingFinished(true , ($scope.scrollInfo.limit==$scope.scrollInfo.valid) );
+          })// end of success.
+          .error(function(data){
+            sref.pushPullLoadingFinished(false , false );
+          }) ;// end of error and jsonp.
         } ;
 
     5. After push or pull finished
