@@ -259,88 +259,35 @@ var utils = (function () {
 })();
 
 function IScroll (options) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// add:
 	
-	this.scroller = options.scroller ;
-
-
-
-
-
-
-
-
-
+	this.scroller = options.scroller ;//wf add.
 
 
 	// rem this.wrapper = typeof el == 'string' ? document.querySelector(el) : el;
 	this.scrollerStyle = this.scroller.style;		// cache style for better performance
 	this.options = {
-
 		mouseWheelSpeed: 20,
-
 		snapThreshold: 0.334,
-
 		infiniteUseTransform: true,
 		deceleration: 0.004,
-
 // INSERT POINT: OPTIONS 
-
 		startX: 0,
 		startY: 0,
 		scrollY: true,
 		directionLockThreshold: 5,
 		momentum: true,
-
 		bounce: true,
 		bounceTime: 600,
 		bounceEasing: '',
-
 		preventDefault: true,
 		preventDefaultException: { tagName: /^(INPUT|TEXTAREA|BUTTON|SELECT)$/ },
-
 		HWCompositing: true,
 		useTransition: true,
 		useTransform: true
 	};
-
 	for ( var i in options ) {
 		this.options[i] = options[i];
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 	//wf add
@@ -368,20 +315,6 @@ function IScroll (options) {
 	this.wrapperWidth	= this.wrapper.clientWidth;
 	this.wrapperHeight	= this.wrapper.clientHeight;
 	// end.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 	// Normalize options
@@ -750,26 +683,6 @@ IScroll.prototype = {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 		// reset if we are outside of the boundaries
 		if ( this.resetPosition(this.options.bounceTime) ) {
 			return;
@@ -873,14 +786,20 @@ IScroll.prototype = {
 		}
 
 		if ( !this.hasVerticalScroll || this.y > 0 ) {
-			y = 0;
+			if( this.pushState==2 )//wf add
+			{
+				y = this.options.pushTriggerOffset ;//wf add
+			}else
+				y = 0;
 		} else if ( this.y < this.maxScrollY ) {
 			y = this.maxScrollY;
 		}
-
 		if ( x == this.x && y == this.y ) {
 			return false;
 		}
+		if( this.pushState==2 && this.y==this.options.pushTriggerOffset ){ //wf add
+			return false ;//wf add
+		}//wf add
 
 		this.scrollTo(x, y, time, this.options.bounceEasing);
 
